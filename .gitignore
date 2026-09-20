@@ -1,0 +1,4 @@
+trust_issues.lrc
+venv/
+__pycache__/
+*.pyc
