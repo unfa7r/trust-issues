@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-BASE="$HOME/.trust-issues"
-mkdir -p "$BASE"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [[ -n "${PREFIX:-}" && -d "$PREFIX" ]]; then
     echo "[+] Termux detected"
@@ -28,29 +27,29 @@ else
         exit 1
     fi
 
-    python3 -m venv "$BASE/venv"
-    "$BASE/venv/bin/python" -m pip install -U pip yt-dlp syncedlyrics
+    python3 -m venv "$SCRIPT_DIR/venv"
+    "$SCRIPT_DIR/venv/bin/python" -m pip install -U pip yt-dlp syncedlyrics
 
-    PYTHON_CMD="$BASE/venv/bin/python"
+    PYTHON_CMD="$SCRIPT_DIR/venv/bin/python"
+    SYNCEDLYRICS_CMD="$SCRIPT_DIR/venv/bin/syncedlyrics"
 
     mkdir -p "$HOME/.local/bin"
     DEST="$HOME/.local/bin/trust"
-    SYNCEDLYRICS_CMD="$BASE/venv/bin/syncedlyrics"
 fi
 
-cp music.py "$BASE/music.py"
-
-if [[ ! -f "$BASE/trust_issues.lrc" ]]; then
+if [[ ! -f "$SCRIPT_DIR/trust_issues.lrc" ]]; then
     echo "[+] Downloading synced lyrics..."
 
     "$SYNCEDLYRICS_CMD" \
         "The Weeknd Trust Issues" \
         --synced-only \
-        -o "$BASE/trust_issues.lrc" || true
+        -o "$SCRIPT_DIR/trust_issues.lrc" || true
 fi
 
 cat > "$DEST" <<EOF
 #!/usr/bin/env bash
+
+SCRIPT_DIR="$SCRIPT_DIR"
 
 clear
 stty -echo
@@ -64,7 +63,7 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
-"$PYTHON_CMD" "$BASE/music.py"
+"$PYTHON_CMD" "\$SCRIPT_DIR/music.py"
 EOF
 
 chmod +x "$DEST"
