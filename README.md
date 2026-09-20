@@ -1,5 +1,5 @@
 
-Termux
+# Termux
 
 pkg update -y
 
@@ -17,7 +17,7 @@ cp trust-issues $PREFIX/bin/trust
 
 trust issues
 
-Linux
+# Linux
 
 sudo apt update
 
