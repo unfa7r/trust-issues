@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -e
+
+if [[ "${1:-}" != "issues" || "$#" -ne 1 ]]; then
+    echo "Usage: trust issues"
+    exit 1
+fi
+
+clear
+stty -echo
+printf '\033[?25l'
+cleanup() {
+    stty echo 2>/dev/null || true
+    printf '\033[?25h'
+    clear
+}
+trap cleanup EXIT INT TERM
+
+python3 "$HOME/.trust-issues/music.py"
