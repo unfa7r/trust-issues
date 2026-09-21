@@ -77,7 +77,7 @@ else
         echo 'export PATH="$HOME/.deno/bin:$PATH"' >> "$HOME/.bashrc"
     fi
 
-    export PATH="$HOME/.local/bin:$HOME/.deno/bin:$PATH"
+    export PATH="$SCRIPT_DIR/venv/bin:$HOME/.local/bin:$HOME/.deno/bin:$PATH"
 fi
 
 if [[ ! -f "$SCRIPT_DIR/trust_issues.lrc" ]]; then
@@ -94,7 +94,7 @@ cat > "$DEST" <<EOF
 
 SCRIPT_DIR="$SCRIPT_DIR"
 
-export PATH="\$HOME/.local/bin:\$HOME/.deno/bin:\$PATH"
+export PATH="$SCRIPT_DIR/venv/bin:\$HOME/.local/bin:\$HOME/.deno/bin:\$PATH"
 
 clear
 stty -echo
