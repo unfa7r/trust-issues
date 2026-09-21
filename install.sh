@@ -5,10 +5,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "[+] Installing Trust Issues..."
 
-# ============================================================
-# TERMUX
-# ============================================================
-
 if [[ -n "${PREFIX:-}" && -d "$PREFIX" ]]; then
 
     echo "[+] Termux detected"
@@ -26,10 +22,7 @@ if [[ -n "${PREFIX:-}" && -d "$PREFIX" ]]; then
     PYTHON_CMD="python"
     SYNCEDLYRICS_CMD="syncedlyrics"
     DEST="$PREFIX/bin/trust"
-
-# ============================================================
-# LINUX
-# ============================================================
+    TMP_DIR="$PREFIX/tmp"
 
 else
 
@@ -65,10 +58,6 @@ else
 
     fi
 
-    # --------------------------------------------------------
-    # Deno
-    # --------------------------------------------------------
-
     if ! command -v deno >/dev/null 2>&1; then
 
         echo "[+] Installing Deno..."
@@ -78,10 +67,6 @@ else
     fi
 
     export PATH="$HOME/.deno/bin:$PATH"
-
-    # --------------------------------------------------------
-    # Python virtual environment
-    # --------------------------------------------------------
 
     python3 -m venv "$SCRIPT_DIR/venv"
 
@@ -95,13 +80,11 @@ else
     SYNCEDLYRICS_CMD="$SCRIPT_DIR/venv/bin/syncedlyrics"
 
     DEST="/usr/local/bin/trust"
+    TMP_DIR="/tmp"
 
 fi
 
-
-# ============================================================
-# SYNCED LYRICS
-# ============================================================
+mkdir -p "$TMP_DIR"
 
 if [[ ! -f "$SCRIPT_DIR/trust_issues.lrc" ]]; then
 
@@ -114,16 +97,13 @@ if [[ ! -f "$SCRIPT_DIR/trust_issues.lrc" ]]; then
 
 fi
 
-
-# ============================================================
-# LAUNCHER
-# ============================================================
+LAUNCHER="$TMP_DIR/trust_launcher"
 
 if [[ "$DEST" == "/usr/local/bin/trust" ]]; then
     sudo mkdir -p /usr/local/bin
 fi
 
-cat > /tmp/trust_launcher <<EOF
+cat > "$LAUNCHER" <<EOF
 #!/usr/bin/env bash
 
 SCRIPT_DIR="$SCRIPT_DIR"
@@ -132,7 +112,7 @@ export PATH="$SCRIPT_DIR/venv/bin:\$HOME/.deno/bin:\$PATH"
 
 clear
 
-stty -echo
+stty -echo 2>/dev/null || true
 
 printf '\033[?25l'
 
@@ -147,33 +127,25 @@ trap cleanup EXIT INT TERM
 "$PYTHON_CMD" "\$SCRIPT_DIR/music.py"
 EOF
 
-
-# ============================================================
-# INSTALL LAUNCHER
-# ============================================================
+chmod 755 "$LAUNCHER"
 
 if [[ "$DEST" == "/usr/local/bin/trust" ]]; then
 
-    sudo install -m 755 /tmp/trust_launcher "$DEST"
+    sudo install -m 755 "$LAUNCHER" "$DEST"
 
 else
 
-    install -m 755 /tmp/trust_launcher "$DEST"
+    install -m 755 "$LAUNCHER" "$DEST"
 
 fi
 
-rm -f /tmp/trust_launcher
-
-
-# ============================================================
-# DONE
-# ============================================================
+rm -f "$LAUNCHER"
 
 echo
 echo "[+] Installation complete."
 echo
 echo "    Run:"
-echo "    trust issues"
+echo "    trust"
 echo
 echo "    Controls:"
 echo "    p = pause/resume"
