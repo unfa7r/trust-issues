@@ -5,7 +5,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "[+] Installing Trust Issues..."
 
+# ============================================================
+# TERMUX
+# ============================================================
+
 if [[ -n "${PREFIX:-}" && -d "$PREFIX" ]]; then
+
     echo "[+] Termux detected"
 
     pkg update -y
@@ -22,11 +27,18 @@ if [[ -n "${PREFIX:-}" && -d "$PREFIX" ]]; then
     SYNCEDLYRICS_CMD="syncedlyrics"
     DEST="$PREFIX/bin/trust"
 
+# ============================================================
+# LINUX
+# ============================================================
+
 else
+
     echo "[+] Linux detected"
 
     if command -v apt-get >/dev/null 2>&1; then
+
         sudo apt-get update
+
         sudo apt-get install -y \
             python3 \
             python3-pip \
@@ -37,6 +49,7 @@ else
             unzip
 
     elif command -v pacman >/dev/null 2>&1; then
+
         sudo pacman -Sy --needed --noconfirm \
             python \
             python-pip \
@@ -44,38 +57,67 @@ else
             mpv \
             curl \
             unzip
+
     else
+
         echo "Unsupported package manager."
         exit 1
+
     fi
 
+    # --------------------------------------------------------
+    # Deno
+    # --------------------------------------------------------
+
     if ! command -v deno >/dev/null 2>&1; then
+
         echo "[+] Installing Deno..."
 
         curl -fsSL https://deno.land/install.sh | sh
 
-        export PATH="$HOME/.deno/bin:$PATH"
     fi
+
+    export PATH="$HOME/.deno/bin:$PATH"
+
+    # --------------------------------------------------------
+    # Python virtual environment
+    # --------------------------------------------------------
 
     python3 -m venv "$SCRIPT_DIR/venv"
 
     "$SCRIPT_DIR/venv/bin/python" -m pip install -U pip
-    "$SCRIPT_DIR/venv/bin/python" -m pip install -U yt-dlp syncedlyrics
+
+    "$SCRIPT_DIR/venv/bin/python" -m pip install -U \
+        yt-dlp \
+        syncedlyrics
 
     PYTHON_CMD="$SCRIPT_DIR/venv/bin/python"
     SYNCEDLYRICS_CMD="$SCRIPT_DIR/venv/bin/syncedlyrics"
 
     DEST="/usr/local/bin/trust"
+
 fi
 
+
+# ============================================================
+# SYNCED LYRICS
+# ============================================================
+
 if [[ ! -f "$SCRIPT_DIR/trust_issues.lrc" ]]; then
+
     echo "[+] Downloading synced lyrics..."
 
     "$SYNCEDLYRICS_CMD" \
         "The Weeknd Trust Issues" \
         --synced-only \
         -o "$SCRIPT_DIR/trust_issues.lrc" || true
+
 fi
+
+
+# ============================================================
+# LAUNCHER
+# ============================================================
 
 if [[ "$DEST" == "/usr/local/bin/trust" ]]; then
     sudo mkdir -p /usr/local/bin
@@ -89,7 +131,9 @@ SCRIPT_DIR="$SCRIPT_DIR"
 export PATH="$SCRIPT_DIR/venv/bin:\$HOME/.deno/bin:\$PATH"
 
 clear
+
 stty -echo
+
 printf '\033[?25l'
 
 cleanup() {
@@ -103,15 +147,27 @@ trap cleanup EXIT INT TERM
 "$PYTHON_CMD" "\$SCRIPT_DIR/music.py"
 EOF
 
+
+# ============================================================
+# INSTALL LAUNCHER
+# ============================================================
+
 if [[ "$DEST" == "/usr/local/bin/trust" ]]; then
-    sudo cp /tmp/trust_launcher "$DEST"
+
+    sudo install -m 755 /tmp/trust_launcher "$DEST"
+
 else
-    cp /tmp/trust_launcher "$DEST"
+
+    install -m 755 /tmp/trust_launcher "$DEST"
+
 fi
 
 rm -f /tmp/trust_launcher
 
-chmod +x "$DEST"
+
+# ============================================================
+# DONE
+# ============================================================
 
 echo
 echo "[+] Installation complete."
@@ -122,3 +178,4 @@ echo
 echo "    Controls:"
 echo "    p = pause/resume"
 echo "    q = quit"
+echo
