@@ -65,19 +65,7 @@ else
     PYTHON_CMD="$SCRIPT_DIR/venv/bin/python"
     SYNCEDLYRICS_CMD="$SCRIPT_DIR/venv/bin/syncedlyrics"
 
-    mkdir -p "$HOME/.local/bin"
-
-    DEST="$HOME/.local/bin/trust"
-
-    if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$HOME/.bashrc" 2>/dev/null; then
-        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
-    fi
-
-    if ! grep -q 'export PATH="$HOME/.deno/bin:$PATH"' "$HOME/.bashrc" 2>/dev/null; then
-        echo 'export PATH="$HOME/.deno/bin:$PATH"' >> "$HOME/.bashrc"
-    fi
-
-    export PATH="$SCRIPT_DIR/venv/bin:$HOME/.local/bin:$HOME/.deno/bin:$PATH"
+    DEST="/usr/local/bin/trust"
 fi
 
 if [[ ! -f "$SCRIPT_DIR/trust_issues.lrc" ]]; then
@@ -89,12 +77,16 @@ if [[ ! -f "$SCRIPT_DIR/trust_issues.lrc" ]]; then
         -o "$SCRIPT_DIR/trust_issues.lrc" || true
 fi
 
-cat > "$DEST" <<EOF
+if [[ "$DEST" == "/usr/local/bin/trust" ]]; then
+    sudo mkdir -p /usr/local/bin
+fi
+
+cat > /tmp/trust_launcher <<EOF
 #!/usr/bin/env bash
 
 SCRIPT_DIR="$SCRIPT_DIR"
 
-export PATH="$SCRIPT_DIR/venv/bin:\$HOME/.local/bin:\$HOME/.deno/bin:\$PATH"
+export PATH="$SCRIPT_DIR/venv/bin:\$HOME/.deno/bin:\$PATH"
 
 clear
 stty -echo
@@ -110,6 +102,14 @@ trap cleanup EXIT INT TERM
 
 "$PYTHON_CMD" "\$SCRIPT_DIR/music.py"
 EOF
+
+if [[ "$DEST" == "/usr/local/bin/trust" ]]; then
+    sudo cp /tmp/trust_launcher "$DEST"
+else
+    cp /tmp/trust_launcher "$DEST"
+fi
+
+rm -f /tmp/trust_launcher
 
 chmod +x "$DEST"
 
